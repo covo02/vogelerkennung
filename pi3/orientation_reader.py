@@ -124,7 +124,7 @@ _ori_lock = threading.Lock()
 _error_count = 0
 
 # I2C handle
-I2C_BUS = 3
+I2C_BUS = 13
 I2C_ADDR = 0x42
 
 _i2c = None

@@ -72,7 +72,7 @@ HTML = """
 <html>
 <head>
   <meta charset="utf-8">
-  <title>PI2 - Dashboard</title>
+  <title>PI3 - Dashboard</title>
   <link rel="icon" type="image/svg+xml"
       href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Crect%20width='32'%20height='32'%20rx='7'%20fill='%23020a1a'/%3E%3Cpath%20d='M8%2014c5-5%2011-5%2016%200'%20fill='none'%20stroke='%239ca3af'%20stroke-width='2.4'%20stroke-linecap='round'/%3E%3Cpath%20d='M11%2017c3-3%207-3%2010%200'%20fill='none'%20stroke='%239ca3af'%20stroke-width='2.4'%20stroke-linecap='round'/%3E%3Cpath%20d='M14%2020c1-1%203-1%204%200'%20fill='none'%20stroke='%239ca3af'%20stroke-width='2.4'%20stroke-linecap='round'/%3E%3Cpath%20d='M10%2010%20L22%2022'%20stroke='%23ef4444'%20stroke-width='3'%20stroke-linecap='round'/%3E%3Ccircle%20cx='16'%20cy='24'%20r='1.8'%20fill='%239ca3af'/%3E%3C/svg%3E">
   <style>
@@ -376,13 +376,13 @@ HTML = """
     <div class="top-buttons">
       <a href="http://192.168.178.11:8080" target="_blank" class="nav-btn">zu PI1</a>
       <a href="http://192.168.178.5:8050" target="_blank" class="nav-btn">zum Server-Dashboard</a>
-      <a href="http://192.168.178.33:8080" target="_blank" class="nav-btn">zu PI3</a>
+      <a href="http://192.168.178.22:8080" target="_blank" class="nav-btn">zu PI2</a>
     </div>
 
     <div class="card">
       <div class="header">
         <div class="title-group">
-          <h1>Dashboard - PI Camera 2</h1>
+          <h1>Dashboard - PI Camera 3</h1>
         </div>
         <div id="status-pill" class="status-pill always-running">
           <span class="status-dot"></span>

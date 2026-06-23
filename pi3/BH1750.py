@@ -29,7 +29,7 @@
 import smbus
 
 # I2C initialisieren
-bus = smbus.SMBus(3)
+bus = smbus.SMBus(13)
 BH1750_ADDR = 0x23
 CONTINUOUS_HIGH_RES_MODE = 0x10
 

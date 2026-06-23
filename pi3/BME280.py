@@ -32,7 +32,7 @@
 import smbus2
 import time
 
-bus = smbus2.SMBus(3)		    # i2c-1 ist tot deswegen i2c-3
+bus = smbus2.SMBus(13)		    # i2c-1 ist tot deswegen i2c-3
 
 BME280_ADDRS = [0x76, 0x77]         # Adresse ist Platinenlayout abhängig
 BME280_ADDR = None
