@@ -10,6 +10,9 @@ from datetime import datetime, timedelta
 import random
 import math
 import json
+import plotly.graph_objects as go
+import plotly.express as px
+
 
 
 def generate_birds(
@@ -22,7 +25,11 @@ def generate_birds(
     min_speed, max_speed,
     position_noise,
     seed_value,
-    initial_spread
+    initial_spread,
+    variance_angle,
+    variance_speed,
+    variance_z,
+    variance_vertical_speed
 ):
     """
     Generiert die Vogel-Flugbahnen basierend auf den übergebenen Parametern.
@@ -54,8 +61,13 @@ def generate_birds(
         z = random.uniform(z_min, z_max)
         
         # Flugparameter
+
+        # angle ist die Richtung, in die der Vogel horizontal fliegt. (Winkel in Radiant) 0 → nach rechts | pi/2 → nach oben | pi → nach links | 3*pi/2 → nach unten 
         angle = random.uniform(0, 2 * math.pi)
+        # speed ist die horizontale Geschwindigkeit pro Simulationsschritt. 
         speed = random.uniform(min_speed, max_speed)
+        # vertical_speed ist die Steig- oder Sinkgeschwindigkeit
+
         vertical_speed = random.uniform(-0.05, 0.05)
         
         # Trajektorie erzeugen
@@ -65,10 +77,17 @@ def generate_birds(
             for _ in range(time_interval):
                 
                 # Richtungsänderung
-                angle += random.gauss(0, 0.04)
+
+                # bei jedem Simulationsschritt wird der Winkel ein bisschen zufällig verändert
+                # mal nach links, mal nach rechts
+                # je größer variance_angle, desto stärker das Zickzack
+                angle += random.gauss(0, variance_angle)
                 
                 # Geschwindigkeitsänderung
-                speed += random.gauss(0, 0.03)
+
+                # pro Schritt wird speed etwas erhöht oder erniedrigt
+                # ändert gesamte Schrittweite
+                speed += random.gauss(0, variance_speed)
                 speed = max(min_speed, min(max_speed, speed))
                 
                 # 2D-Bewegung
@@ -77,11 +96,13 @@ def generate_birds(
                 
                 # Vertikale Bewegung
                 z += vertical_speed
-                z += random.gauss(0, 0.05)
+                z += random.gauss(0, variance_z)
                 z = max(z_min, min(z_max, z))
+
                 
                 # Steiggeschwindigkeit ändern
-                vertical_speed += random.gauss(0, 0.01)
+                #additives Höhenrauschen
+                vertical_speed += random.gauss(0, variance_vertical_speed)
             
             # Messpunkt erzeugen
             bird_id = f"bird_{bird_number:04d}"
@@ -166,18 +187,18 @@ def main():
     with col1:
         x_min = st.number_input("X Min", value=0, step=10)
         y_min = st.number_input("Y Min", value=0, step=10)
-        z_min = st.number_input("Z Min", value=10, step=5)
+        z_min = st.number_input("Z Min", value=50, step=5)
     
     with col2:
-        x_max = st.number_input("X Max", value=300, step=10)
-        y_max = st.number_input("Y Max", value=300, step=10)
-        z_max = st.number_input("Z Max", value=200, step=5)
+        x_max = st.number_input("X Max", value=600, step=10)
+        y_max = st.number_input("Y Max", value=600, step=10)
+        z_max = st.number_input("Z Max", value=300, step=5)
     
     initial_spread = st.sidebar.slider(
         "Initiale Streuung (Offset)",
         min_value=0,
         max_value=2000,
-        value=500,
+        value=1000,
         help="Zufälliger Offset bei der Startposition, damit Vögel nicht exakt in der Mitte starten"
     )
     
@@ -210,7 +231,50 @@ def main():
         step=0.01,
         format="%.2f"
     )
+
+    # -----------------------------------------------------------
+    # Varianzen
+    # -----------------------------------------------------------
     
+    st.sidebar.header("Varianz der Flugbahnen")
+    
+    
+    variance_angle = st.sidebar.slider(
+        "Richtungsänderung",
+        min_value=0.0,
+        max_value=0.3,
+        value=0.04,
+        step=0.01,
+        format="%.2f"
+    )
+
+    variance_speed = st.sidebar.slider(
+        "Geschwindigkeitsänderung",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.03,
+        step=0.01,
+        format="%.2f"
+    )
+
+    variance_z = st.sidebar.slider(
+            "Vertikale Bewegung",
+            min_value=0.0,
+            max_value=1.0,
+            value=0.05,
+            step=0.01,
+            format="%.2f"
+        )
+
+    variance_vertical_speed= st.sidebar.slider(
+            "Steiggeschwindigkeit ändern",
+            min_value=0.0,
+            max_value=0.1,
+            value=0.01,
+            step=0.005,
+            format="%.2f"
+        )
+
     # ============================================================
     # Hauptbereich - Button und Ergebnisse
     # ============================================================
@@ -241,13 +305,39 @@ def main():
                 max_speed=max_speed,
                 position_noise=position_noise,
                 seed_value=seed_value,
-                initial_spread=initial_spread
+                initial_spread=initial_spread,
+                variance_angle=variance_angle,
+                variance_speed=variance_speed,
+                variance_z=variance_z,
+                variance_vertical_speed=variance_vertical_speed
             )
+
+
             
+            # -----------------------------------------------------------
+            # Automatische Pi-Positionierung basierend auf Raumgrenzen
+            # -----------------------------------------------------------
+            
+            pi_1 = {"id": "pi_1", "name": "Raspberry Pi Ursprung", "x": x_min, "y": y_min, "z": 0}
+            pi_2 = {"id": "pi_2", "name": "Raspberry Pi X-Achse", "x": x_max, "y": y_min, "z": 0}
+            pi_3 = {"id": "pi_3", "name": "Raspberry Pi Y-Achse", "x": x_min, "y": y_max, "z": 0}
+
+            plot_attachment = {
+                "version": "1.0",
+                "type": "triangulation_setup",
+                "devices": [pi_1, pi_2, pi_3]
+            }
+
+            # Zusammenführen der Daten für die JSON-Ausgabe
+            output_data = {
+                "plotAttachment": plot_attachment,
+                "simulated_birds": records
+            }
+
             # Als JSON speichern
             output_file = "vogel_flugbahnen.json"
             with open(output_file, "w") as f:
-                json.dump(records, f, indent=2)
+                json.dump(output_data, f, indent=2)
             
             # Erfolgsmeldung
             st.success(f"✅ {len(records)} Datenpunkte generiert und gespeichert!")
@@ -297,8 +387,7 @@ def main():
             colors = {bird: f"hsl({i * 360 // len(unique_birds)}, 70%, 50%)" for i, bird in enumerate(unique_birds)}
             df["color"] = df["bird_id"].map(colors)
             
-            # Plotly für interaktive Karte
-            import plotly.express as px
+
             
             fig = px.scatter(
                 df,
@@ -308,6 +397,7 @@ def main():
                 hover_data=["timestamp", "z"],
                 title="Vogel-Flugbahnen (2D Ansicht)",
                 color_discrete_sequence=px.colors.qualitative.Set3
+
             )
             
             fig.update_layout(
@@ -318,7 +408,78 @@ def main():
             )
             
             st.plotly_chart(fig, use_container_width=True)
-    
+
+            # 3D-Plot
+            st.markdown("---")
+            st.subheader("3D-Plot der Flugbahnen")
+            
+            # Farben für jeden Vogel generieren (deterministisch basierend auf bird_id)
+            unique_birds = df["bird_id"].unique()
+            
+            # Farbpalette definieren (bunt und unterscheidbar)
+            # Wir nutzen HSL-Farben, um jeden Vogel eindeutig einzufärben
+            bird_colors = {}
+            for i, bird_id in enumerate(unique_birds):
+                hue = (i * 137.508) % 360  # Goldener Winkel für gute Verteilung
+                bird_colors[bird_id] = f"hsl({hue}, 80%, 50%)"
+
+            fig2 = go.Figure()
+
+            # 1. Vogel-Flugbahnen zeichnen
+            for bird_id, group in df.groupby("bird_id"):
+                color = bird_colors[bird_id]
+                fig2.add_trace(
+                    go.Scatter3d(
+                        x=group["x"],
+                        y=group["y"],
+                        z=group["z"],
+                        mode="lines+markers",
+                        marker=dict(symbol="circle", size=2, color=color),
+                        line=dict(width=1, color="gray"),
+                        name=bird_id,
+                        text=group["timestamp"].astype(str),
+                        hovertemplate="<b>%{fullData.name}</b><br>Zeit: %{text}<br>X: %{x}<br>Y: %{y}<br>Z: %{z}<extra></extra>",
+                        legendgroup="birds"
+                    )
+                )
+
+            # 2. Raspberry Pis als eigene Marker hinzufügen (Rot/Groß)
+            pi_x = [pi_1["x"], pi_2["x"], pi_3["x"]]
+            pi_y = [pi_1["y"], pi_2["y"], pi_3["y"]]
+            pi_z = [pi_1["z"], pi_2["z"], pi_3["z"]]
+            pi_names = [f"{p['name']} ({p['id']})" for p in [pi_1, pi_2, pi_3]]
+
+            fig2.add_trace(
+                go.Scatter3d(
+                    x=pi_x,
+                    y=pi_y,
+                    z=pi_z,
+                    mode="markers+text",
+                    marker=dict(size=10, color="red", symbol="diamond"),
+                    text=pi_names,
+                    textposition="top center",
+                    name="Raspberry Pis",
+                    legendgroup="setup"
+                )
+            )
+
+            fig2.update_layout(
+                scene=dict(
+                    xaxis_title="X [m]",
+                    yaxis_title="Y [m]",
+                    zaxis_title="Höhe Z [m]",
+                    # Achsenbereich begrenzen, damit die Pis unten sind
+                    zaxis=dict(range=[0, z_max * 1.1])
+                ),
+                height=1000,
+                width=800,
+                legend=dict(
+                    itemsizing="constant"
+                )
+            )
+
+            st.plotly_chart(fig2, use_container_width=True)
+                
     else:
         st.info(
             "In der **Seitenleiste** die Parameter anpassen "
