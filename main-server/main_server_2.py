@@ -1741,6 +1741,7 @@ def init_dash_app():
                         className="row",
                         children=[
                             html.Button("CSV export", id="btn-export-csv", n_clicks=0, className="btn"),
+                            html.Button("Reset Live View", id="btn-reset-view", n_clicks=0, className="btn"),
                             dcc.Download(id="download-csv"),
                             html.Span("Status: running", className="badge"),
                             *[
@@ -2144,6 +2145,66 @@ def init_dash_app():
         if not os.path.exists(RESULTS_CSV):
             return no_update
         return dcc.send_file(RESULTS_CSV)
+
+    # -------------------------------
+    # Reset live view
+    @dash_app.callback(
+        Output("camera-store-live", "data"),
+        Output("live-graph", "figure"),
+        Input("btn-reset-view", "n_clicks"),
+        prevent_initial_call=True
+    )
+    def reset_live_view(n_clicks):
+        log("[UI] Reset live view button clicked")
+        global dash_live_figure, gps_reference_point
+        with dash_live_figure_lock:
+            reset_live_figure_keep_cameras()
+        with camera_positions_lock:
+            camera_positions_enu.clear()
+            cams = []
+        with gps_reference_lock:
+            gps_reference_point = None
+        with processed_events_lock:
+            evs = list(processed_events)[:200]
+        fig = make_base_live_figure()
+        for cam_id, (e, nn, u) in cams:
+            fig.add_trace(
+                go.Scatter3d(
+                    x=[e],
+                    y=[nn],
+                    z=[u],
+                    mode="markers+text",
+                    marker=dict(size=7, symbol="circle"),
+                    text=[cam_id],
+                    textposition="top center",
+                    name=f"Camera {cam_id}",
+                    showlegend=True,
+                )
+            )
+        for ev in reversed(evs):
+            ev_id = ev.get("event_id")
+            if not ev_id:
+                continue
+            with processed_events_by_id_lock:
+                detail = processed_events_by_id.get(ev_id)
+            if not detail:
+                continue
+            ts = detail.get("timestamp", "")
+            for p in detail.get("points", []):
+                fig.add_trace(
+                    go.Scatter3d(
+                        x=[p["enu_e"]],
+                        y=[p["enu_n"]],
+                        z=[p["enu_u"]],
+                        mode="markers",
+                        marker=dict(size=6),
+                        hovertext=f"Event: {ev_id}<br>ENU: E={p['enu_e']:.2f}, N={p['enu_n']:.2f}, U={p['enu_u']:.2f}",
+                        hoverinfo="text",
+                        showlegend=False,
+                    )
+                )
+        fig.update_layout(uirevision="keep-view")
+        return None, fig
 
     # -------------------------------
     # Helper: keep camera markers present in the global live figure WITHOUT rebuilding
