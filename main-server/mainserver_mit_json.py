@@ -1138,15 +1138,6 @@ def processing_worker():
             camera_ids_in_event: List[str] = []
             total_motion_pixels_all = 0
 
-            # ================
-            # Ergänzung Colin
-            # ================
-            motion_pixels_raw = {}
-            # ================
-            # 
-            # ================
-
-
             for idx, (camera_id, client_data) in enumerate(event_data.items()):
                 camera_ids_in_event.append(camera_id)
                 try:
@@ -1181,33 +1172,7 @@ def processing_worker():
                         debug_path=f"{DEBUG_FOLDER}/{event_id}_{camera_id}_motion.jpg",
                         threshold_mode="fixed",
                     )
-                    # ================
-                    # Ergänzung Colin
-                    # ================
 
-                    motion_pixels_raw[camera_id] = []
-
-                    for mp in motion_pixels:
-                        try:
-                            if hasattr(mp, "center_x") and hasattr(mp, "center_y"):
-                                motion_pixels_raw[camera_id].append(
-                                    {
-                                        "x": float(mp.center_x),
-                                        "y": float(mp.center_y)
-                                    }
-                                )
-                            else:
-                                motion_pixels_raw[camera_id].append(
-                                    {
-                                        "x": float(mp[0]),
-                                        "y": float(mp[1])
-                                    }
-                                )
-                        except Exception:
-                            pass
-                    # ================
-                    # 
-                    # ================
                     motion_ms = (time.perf_counter() - t_m0) * 1000.0
                     
                     
@@ -1445,21 +1410,6 @@ def processing_worker():
                 },
 
                 "points": points_payload,
-
-                "camera_positions": camera_positions_enu_event,
-
-                "camera_view_directions": camera_view_dir_enu_event,
-
-                "motion_pixels": motion_pixels_raw,
-
-                "camera_timings": camera_timings,
-
-                "trigger": {
-                    "sent_utc": sent_utc,
-                    "trigger_time_utc": trigger_time_utc,
-                    "trigger_to_first_rx_ms": trigger_to_first_rx_ms,
-                    "trigger_to_done_ms": trigger_to_done_ms,
-                }
             }
 
             save_event_for_ml(ml_event)
