@@ -50,14 +50,3 @@ Die Ordner `pi1/`, `pi2/` und `pi3/` enthalten jeweils die Software für einen K
 | `BME280.py` | Liest Temperatur, Luftdruck und relative Luftfeuchtigkeit vom BME280-Sensor aus. |
 
 Die beiden Client-Dateien sollten nicht als gleichzeitig zu startende Programme verstanden werden: Pro Pi wird die zum jeweiligen Installationsstand passende Variante verwendet.
-
-## Flugbahn-Mockup
-
-Der Ordner `flugbahn_mockup/` enthält eine separate Streamlit-Anwendung zum Erzeugen und Darstellen simulierter Vogelflugbahnen. Sie dient als Mockup und ist nicht Teil der laufenden Kamera-Pipeline.
-
-| Datei | Aufgabe |
-|---|---|
-| `app.py` | Einstiegspunkt und Navigation der Streamlit-Anwendung. |
-| `generate_birds.py` | Konfiguriert und generiert simulierte Flugbahndaten als JSON-Datei. |
-| `plot_birds.py` | Stellt Flugbahnen und Vergleichsdaten grafisch dar. |
-| `README.md` | Enthält die Startanleitung: `streamlit run app.py` im Ordner `flugbahn_mockup/`; benötigt Streamlit. |
